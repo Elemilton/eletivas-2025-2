@@ -133,6 +133,7 @@
         
         input[type="text"],
         input[type="tel"],
+        input[type="password"],
         select {
             width: 100%;
             padding: 15px;
@@ -214,6 +215,7 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            cursor: pointer;
         }
         
         .eletiva-card:hover {
@@ -241,6 +243,12 @@
             font-weight: bold;
             color: var(--danger);
             font-size: 1.2rem;
+        }
+        
+        .eletiva-card.selected {
+            background-color: #e8f0fe;
+            border-color: var(--primary);
+            transform: translateY(-5px);
         }
         
         .eletiva-title {
@@ -413,9 +421,129 @@
         .info-text i {
             margin-top: 3px;
         }
+        
+        .admin-panel {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--medium);
+        }
+        
+        .admin-header h2 {
+            font-size: 1.8rem;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .eletiva-select {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid var(--medium);
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+        }
+        
+        .inscricoes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .inscricoes-table th,
+        .inscricoes-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--medium);
+        }
+        
+        .inscricoes-table th {
+            background: #f0f0f0;
+            font-weight: 600;
+        }
+        
+        .inscricoes-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .login-form {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin: 50px auto;
+        }
+        
+        .login-form h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--primary-dark);
+        }
+        
+        .admin-link {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            background: rgba(0,0,0,0.3);
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-link:hover {
+            background: rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
+    <a href="#" id="admin-link" class="admin-link"><i class="fas fa-lock"></i> Área Administrativa</a>
+    
     <div class="header">
         <h1><i class="fas fa-book-open"></i> Eletivas 2025.2</h1>
         <p>Formulário de inscrição para as eletivas do segundo semestre de 2025</p>
@@ -423,7 +551,7 @@
     
     <div id="notification" class="notification"></div>
     
-    <div class="container">
+    <div class="container" id="form-container">
         <!-- Seção 1: Nome Completo -->
         <div class="form-section">
             <div class="section-header">
@@ -515,6 +643,10 @@
                 <div class="eletivas-container" id="eletivas-container">
                     <!-- Eletivas serão geradas dinamicamente via JavaScript -->
                 </div>
+                <div id="selected-eletiva" style="margin-top: 20px; padding: 15px; background: #e8f0fe; border-radius: var(--border-radius); display: none;">
+                    <h3><i class="fas fa-check-circle"></i> Eletiva Selecionada:</h3>
+                    <p id="selected-eletiva-name" style="font-weight: bold; margin-top: 10px;"></p>
+                </div>
             </div>
         </div>
         
@@ -523,6 +655,67 @@
                 <i class="fas fa-paper-plane"></i> Enviar Inscrição
             </button>
         </div>
+    </div>
+    
+    <!-- Painel Administrativo -->
+    <div class="admin-panel" id="admin-panel">
+        <div class="admin-header">
+            <h2><i class="fas fa-user-shield"></i> Área Administrativa</h2>
+            <button id="logout-btn" class="submit-btn"><i class="fas fa-sign-out-alt"></i> Sair</button>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tab active" data-tab="inscricoes">Inscrições</div>
+            <div class="tab" data-tab="vagas">Controle de Vagas</div>
+        </div>
+        
+        <div id="inscricoes-tab" class="tab-content active">
+            <select id="eletiva-filter" class="eletiva-select">
+                <option value="">Todas as eletivas</option>
+                <!-- Opções serão preenchidas via JavaScript -->
+            </select>
+            
+            <table class="inscricoes-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Turma</th>
+                        <th>WhatsApp</th>
+                        <th>Eletiva</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody id="inscricoes-table-body">
+                    <!-- Dados serão preenchidos via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="vagas-tab" class="tab-content">
+            <div class="info-text">
+                <i class="fas fa-info-circle"></i>
+                <div>Atualize os limites de vagas para cada eletiva. As alterações afetarão apenas novas inscrições.</div>
+            </div>
+            
+            <div id="eletivas-limits" style="margin-top: 20px;">
+                <!-- Controles de limite serão gerados via JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Formulário de Login -->
+    <div class="login-form" id="login-form">
+        <h2><i class="fas fa-lock"></i> Acesso Administrativo</h2>
+        <div class="form-group">
+            <label for="admin-password" class="required">Senha de Acesso</label>
+            <input type="password" id="admin-password" placeholder="Digite a senha administrativa">
+        </div>
+        <div class="submit-container">
+            <button id="login-btn" class="submit-btn">
+                <i class="fas fa-sign-in-alt"></i> Acessar
+            </button>
+        </div>
+        <div id="login-notification" style="margin-top: 20px;"></div>
     </div>
     
     <div class="footer">
@@ -598,6 +791,22 @@
         const nomeInput = document.getElementById('nome');
         const nomeCount = document.getElementById('nome-count');
         const whatsappInput = document.getElementById('whatsapp');
+        const adminPanel = document.getElementById('admin-panel');
+        const loginForm = document.getElementById('login-form');
+        const formContainer = document.getElementById('form-container');
+        const adminLink = document.getElementById('admin-link');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const selectedEletiva = document.getElementById('selected-eletiva');
+        const selectedEletivaName = document.getElementById('selected-eletiva-name');
+        const eletivaFilter = document.getElementById('eletiva-filter');
+        const inscricoesTableBody = document.getElementById('inscricoes-table-body');
+        const eletivasLimits = document.getElementById('eletivas-limits');
+
+        // Estado da aplicação
+        let selectedEletivaId = null;
+        let isAdmin = false;
+        const ADMIN_PASSWORD = "admin123"; // Senha para acesso administrativo
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
@@ -614,17 +823,38 @@
             nomeInput.addEventListener('input', updateCharacterCount);
             whatsappInput.addEventListener('input', formatWhatsapp);
             submitBtn.addEventListener('click', handleSubmit);
+            adminLink.addEventListener('click', showLoginForm);
+            loginBtn.addEventListener('click', handleLogin);
+            logoutBtn.addEventListener('click', handleLogout);
             
-            // Adiciona evento para seleção de turma
-            document.querySelectorAll('.radio-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    document.querySelectorAll('.radio-option').forEach(el => {
-                        el.classList.remove('selected');
+            // Event listeners para abas
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove classe ativa de todas as abas
+                    document.querySelectorAll('.tab').forEach(t => {
+                        t.classList.remove('active');
                     });
-                    this.classList.add('selected');
-                    this.querySelector('input').checked = true;
+                    
+                    // Remove classe ativa de todos os conteúdos
+                    document.querySelectorAll('.tab-content').forEach(c => {
+                        c.classList.remove('active');
+                    });
+                    
+                    // Adiciona classe ativa à aba clicada
+                    this.classList.add('active');
+                    
+                    // Mostra o conteúdo correspondente
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
                 });
             });
+            
+            // Event listener para filtro de eletivas
+            eletivaFilter.addEventListener('change', updateInscricoesTable);
+            
+            // Oculta o painel administrativo inicialmente
+            adminPanel.style.display = 'none';
+            loginForm.style.display = 'none';
         });
 
         // Atualiza contagem de caracteres do nome
@@ -656,12 +886,13 @@
             const savedData = getSavedData();
             
             eletivasConfig.forEach(eletiva => {
-                const count = savedData[eletiva.id] || 0;
+                const count = getInscricoesPorEletiva(eletiva.id).length;
                 const isFull = count >= eletiva.limit;
                 const percentage = Math.min(100, (count / eletiva.limit) * 100);
                 
                 const eletivaCard = document.createElement('div');
                 eletivaCard.className = `eletiva-card ${isFull ? 'disabled' : ''}`;
+                eletivaCard.dataset.id = eletiva.id;
                 eletivaCard.innerHTML = `
                     <div class="eletiva-title">
                         <div class="eletiva-icon">
@@ -679,18 +910,22 @@
                     <div class="progress-bar">
                         <div class="progress-fill" style="width: ${percentage}%"></div>
                     </div>
-                    <input type="radio" name="eletiva" value="${eletiva.id}" ${isFull ? 'disabled' : ''} style="position: absolute; opacity: 0; width: 0; height: 0;">
                 `;
                 
                 if (!isFull) {
                     eletivaCard.addEventListener('click', function() {
-                        if (!eletivaCard.classList.contains('disabled')) {
-                            document.querySelectorAll('.eletiva-card').forEach(el => {
-                                el.classList.remove('selected');
-                            });
-                            eletivaCard.classList.add('selected');
-                            eletivaCard.querySelector('input').checked = true;
-                        }
+                        // Remove a seleção de todas as eletivas
+                        document.querySelectorAll('.eletiva-card').forEach(card => {
+                            card.classList.remove('selected');
+                        });
+                        
+                        // Seleciona a eletiva clicada
+                        this.classList.add('selected');
+                        selectedEletivaId = this.dataset.id;
+                        
+                        // Mostra a eletiva selecionada
+                        selectedEletiva.style.display = 'block';
+                        selectedEletivaName.textContent = eletiva.title;
                     });
                 }
                 
@@ -706,23 +941,34 @@
             const nome = nomeInput.value.trim();
             const turma = document.querySelector('input[name="turma"]:checked')?.value;
             const whatsapp = whatsappInput.value.trim();
-            const eletiva = document.querySelector('input[name="eletiva"]:checked')?.value;
             
             // Obter dados salvos
             const savedData = getSavedData();
             
             // Verificar se a eletiva ainda tem vagas
-            const eletivaObj = eletivasConfig.find(e => e.id === eletiva);
-            const currentCount = savedData[eletiva] || 0;
+            const eletivaObj = eletivasConfig.find(e => e.id === selectedEletivaId);
+            const count = getInscricoesPorEletiva(selectedEletivaId).length;
             
-            if (currentCount >= eletivaObj.limit) {
+            if (count >= eletivaObj.limit) {
                 showNotification('Esta eletiva atingiu o limite de vagas. Por favor, escolha outra.', 'error');
                 renderEletivas();
                 return;
             }
             
-            // Incrementar contador da eletiva
-            savedData[eletiva] = currentCount + 1;
+            // Criar objeto de inscrição
+            const inscricao = {
+                id: Date.now(),
+                nome: nome,
+                turma: turma,
+                whatsapp: whatsapp,
+                eletiva: selectedEletivaId,
+                eletivaNome: eletivaObj.title,
+                data: new Date().toLocaleString()
+            };
+            
+            // Adicionar à lista de inscrições
+            savedData.inscricoes = savedData.inscricoes || [];
+            savedData.inscricoes.push(inscricao);
             
             // Salvar dados
             saveData(savedData);
@@ -733,7 +979,7 @@
             // Atualizar a exibição
             renderEletivas();
             
-            // Limpar formulário (exceto eletiva)
+            // Limpar formulário
             nomeInput.value = '';
             updateCharacterCount();
             document.querySelectorAll('.radio-option').forEach(el => {
@@ -746,6 +992,8 @@
             document.querySelectorAll('.eletiva-card').forEach(el => {
                 el.classList.remove('selected');
             });
+            selectedEletiva.style.display = 'none';
+            selectedEletivaId = null;
         }
 
         // Valida o formulário
@@ -753,7 +1001,6 @@
             const nome = nomeInput.value.trim();
             const turma = document.querySelector('input[name="turma"]:checked');
             const whatsapp = whatsappInput.value.trim();
-            const eletiva = document.querySelector('input[name="eletiva"]:checked');
             
             let valid = true;
             let message = '';
@@ -769,7 +1016,7 @@
                 valid = false;
                 message = 'Por favor, informe um número de WhatsApp válido com DDD.';
                 whatsappInput.focus();
-            } else if (!eletiva) {
+            } else if (!selectedEletivaId) {
                 valid = false;
                 message = 'Por favor, selecione uma eletiva.';
             }
@@ -795,7 +1042,7 @@
         // Obtém dados salvos
         function getSavedData() {
             const savedData = localStorage.getItem('eletivasData');
-            return savedData ? JSON.parse(savedData) : {};
+            return savedData ? JSON.parse(savedData) : { inscricoes: [], config: eletivasConfig };
         }
 
         // Salva dados
@@ -805,17 +1052,206 @@
 
         // Carrega dados salvos
         function loadSavedData() {
-            // Para demonstração, vamos inicializar alguns dados
-            if (!localStorage.getItem('eletivasData')) {
-                const initialData = {
-                    'arte-sustentavel': 15,
-                    'biq-games': 27,
-                    'danca': 28, // Eletiva cheia
-                    'ervas': 20
-                };
-                localStorage.setItem('eletivasData', JSON.stringify(initialData));
+            const savedData = getSavedData();
+            
+            // Se não houver configuração salva, usa a padrão
+            if (!savedData.config) {
+                savedData.config = eletivasConfig;
+                saveData(savedData);
+            } else {
+                // Atualiza a configuração com os dados salvos
+                eletivasConfig.forEach(eletiva => {
+                    const savedEletiva = savedData.config.find(e => e.id === eletiva.id);
+                    if (savedEletiva) {
+                        eletiva.limit = savedEletiva.limit;
+                    }
+                });
+            }
+            
+            return savedData;
+        }
+        
+        // Obtém inscrições por eletiva
+        function getInscricoesPorEletiva(eletivaId) {
+            const savedData = getSavedData();
+            return savedData.inscricoes?.filter(i => i.eletiva === eletivaId) || [];
+        }
+        
+        // Mostra o formulário de login
+        function showLoginForm(e) {
+            e.preventDefault();
+            formContainer.style.display = 'none';
+            adminPanel.style.display = 'none';
+            loginForm.style.display = 'block';
+        }
+        
+        // Manipula o login
+        function handleLogin() {
+            const password = document.getElementById('admin-password').value;
+            
+            if (password === ADMIN_PASSWORD) {
+                isAdmin = true;
+                loginForm.style.display = 'none';
+                formContainer.style.display = 'none';
+                adminPanel.style.display = 'block';
+                initAdminPanel();
+            } else {
+                document.getElementById('login-notification').innerHTML = `
+                    <div class="notification error">
+                        Senha incorreta. Tente novamente.
+                    </div>
+                `;
             }
         }
+        
+        // Manipula o logout
+        function handleLogout() {
+            isAdmin = false;
+            adminPanel.style.display = 'none';
+            formContainer.style.display = 'block';
+            document.getElementById('admin-password').value = '';
+        }
+        
+        // Inicializa o painel administrativo
+        function initAdminPanel() {
+            // Preenche o seletor de filtro de eletivas
+            eletivaFilter.innerHTML = '<option value="">Todas as eletivas</option>';
+            eletivasConfig.forEach(eletiva => {
+                const option = document.createElement('option');
+                option.value = eletiva.id;
+                option.textContent = eletiva.title;
+                eletivaFilter.appendChild(option);
+            });
+            
+            // Atualiza a tabela de inscrições
+            updateInscricoesTable();
+            
+            // Preenche os controles de limite de vagas
+            eletivasLimits.innerHTML = '';
+            eletivasConfig.forEach(eletiva => {
+                const limitControl = document.createElement('div');
+                limitControl.className = 'form-group';
+                limitControl.innerHTML = `
+                    <label for="limit-${eletiva.id}">${eletiva.title}:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="limit-${eletiva.id}" min="0" value="${eletiva.limit}" style="flex: 1;">
+                        <button class="submit-btn" data-id="${eletiva.id}" style="padding: 10px 15px;">
+                            <i class="fas fa-save"></i> Atualizar
+                        </button>
+                    </div>
+                `;
+                eletivasLimits.appendChild(limitControl);
+                
+                // Adiciona evento para salvar o limite
+                const saveBtn = limitControl.querySelector('button');
+                saveBtn.addEventListener('click', function() {
+                    const newLimit = parseInt(document.getElementById(`limit-${eletiva.id}`).value);
+                    if (!isNaN(newLimit) && newLimit >= 0) {
+                        eletiva.limit = newLimit;
+                        
+                        // Atualiza a configuração no localStorage
+                        const savedData = getSavedData();
+                        savedData.config = eletivasConfig;
+                        saveData(savedData);
+                        
+                        // Atualiza a exibição
+                        renderEletivas();
+                        
+                        // Feedback
+                        showNotification(`Limite de vagas para ${eletiva.title} atualizado para ${newLimit}!`, 'success');
+                    }
+                });
+            });
+        }
+        
+        // Atualiza a tabela de inscrições
+        function updateInscricoesTable() {
+            const savedData = getSavedData();
+            const inscricoes = savedData.inscricoes || [];
+            const filterValue = eletivaFilter.value;
+            
+            // Filtra as inscrições
+            const filteredInscricoes = filterValue 
+                ? inscricoes.filter(i => i.eletiva === filterValue)
+                : inscricoes;
+            
+            // Preenche a tabela
+            inscricoesTableBody.innerHTML = '';
+            
+            if (filteredInscricoes.length === 0) {
+                inscricoesTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px;">
+                            Nenhuma inscrição encontrada
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            filteredInscricoes.forEach(inscricao => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${inscricao.nome}</td>
+                    <td>${inscricao.turma}</td>
+                    <td>${inscricao.whatsapp}</td>
+                    <td>${inscricao.eletivaNome}</td>
+                    <td>${inscricao.data}</td>
+                `;
+                inscricoesTableBody.appendChild(row);
+            });
+        }
+        
+        // Inicializa alguns dados para demonstração
+        function initDemoData() {
+            const savedData = getSavedData();
+            
+            if (!savedData.inscricoes || savedData.inscricoes.length === 0) {
+                savedData.inscricoes = [
+                    {
+                        id: 1,
+                        nome: "Ana Silva",
+                        turma: "2A",
+                        whatsapp: "(11)98765-4321",
+                        eletiva: "danca",
+                        eletivaNome: "Dança",
+                        data: "10/06/2025, 14:30:25"
+                    },
+                    {
+                        id: 2,
+                        nome: "Carlos Oliveira",
+                        turma: "1B",
+                        whatsapp: "(21)99876-5432",
+                        eletiva: "biq-games",
+                        eletivaNome: "BiQ Games",
+                        data: "10/06/2025, 15:45:12"
+                    },
+                    {
+                        id: 3,
+                        nome: "Mariana Costa",
+                        turma: "2C",
+                        whatsapp: "(31)99123-4567",
+                        eletiva: "arte-sustentavel",
+                        eletivaNome: "Arte Sustentável",
+                        data: "11/06/2025, 09:15:33"
+                    },
+                    {
+                        id: 4,
+                        nome: "Pedro Santos",
+                        turma: "1D",
+                        whatsapp: "(41)99234-5678",
+                        eletiva: "sobrevivencialismo",
+                        eletivaNome: "Sobrevivencialismo",
+                        data: "11/06/2025, 11:20:47"
+                    }
+                ];
+                
+                saveData(savedData);
+            }
+        }
+        
+        // Inicializa dados de demonstração
+        initDemoData();
     </script>
 </body>
 </html>
