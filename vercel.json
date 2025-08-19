@@ -2,11 +2,15 @@
   "version": 2,
   "builds": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build"
+      "src": "*.html",
+      "use": "@vercel/static"
     },
     {
       "src": "api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "lib/**/*.js", 
       "use": "@vercel/node"
     }
   ],
@@ -19,10 +23,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "functions": {
-    "api/**/*.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
