@@ -1,0 +1,13 @@
+{
+  "name": "eletivas-form",
+  "version": "1.0.0",
+  "description": "Formulário de inscrição para eletivas",
+  "dependencies": {
+    "postgres": "^3.4.4"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  }
+}
