@@ -724,7 +724,7 @@
     </div>
 
     <script>
-        // Configuração das eletivas com limites
+        // Configuração inicial das eletivas
         const eletivasConfig = [
             { 
                 id: 'arte-sustentavel', 
@@ -807,11 +807,12 @@
         let selectedEletivaId = null;
         let isAdmin = false;
         const ADMIN_PASSWORD = "admin123"; // Senha para acesso administrativo
+        const API_URL = "https://eletivas-2025-2.vercel.app/"; // Substitua pelo seu URL do Vercel
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            // Carrega dados salvos ou inicializa
-            loadSavedData();
+            // Carrega dados do backend
+            loadDataFromBackend();
             
             // Cria as opções de eletivas
             renderEletivas();
@@ -857,6 +858,28 @@
             loginForm.style.display = 'none';
         });
 
+        // Carrega dados do backend
+        async function loadDataFromBackend() {
+            try {
+                const response = await fetch(`${API_URL}/inscricoes`);
+                if (!response.ok) throw new Error('Erro ao carregar inscrições');
+                
+                const data = await response.json();
+                
+                // Atualiza a exibição
+                renderEletivas();
+                if (isAdmin) {
+                    updateInscricoesTable();
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                showNotification('Erro ao carregar dados do servidor. Tente novamente mais tarde.', 'error');
+                return [];
+            }
+        }
+
         // Atualiza contagem de caracteres do nome
         function updateCharacterCount() {
             nomeCount.textContent = nomeInput.value.length;
@@ -880,61 +903,70 @@
         }
 
         // Renderiza as eletivas
-        function renderEletivas() {
+        async function renderEletivas() {
             eletivasContainer.innerHTML = '';
             
-            const savedData = getSavedData();
-            
-            eletivasConfig.forEach(eletiva => {
-                const count = getInscricoesPorEletiva(eletiva.id).length;
-                const isFull = count >= eletiva.limit;
-                const percentage = Math.min(100, (count / eletiva.limit) * 100);
+            try {
+                // Carrega as inscrições do backend
+                const response = await fetch(`${API_URL}/inscricoes`);
+                if (!response.ok) throw new Error('Erro ao carregar inscrições');
                 
-                const eletivaCard = document.createElement('div');
-                eletivaCard.className = `eletiva-card ${isFull ? 'disabled' : ''}`;
-                eletivaCard.dataset.id = eletiva.id;
-                eletivaCard.innerHTML = `
-                    <div class="eletiva-title">
-                        <div class="eletiva-icon">
-                            <i class="${eletiva.icon}"></i>
+                const inscricoes = await response.json();
+                
+                eletivasConfig.forEach(eletiva => {
+                    const count = inscricoes.filter(i => i.eletiva === eletiva.id).length;
+                    const isFull = count >= eletiva.limit;
+                    const percentage = Math.min(100, (count / eletiva.limit) * 100);
+                    
+                    const eletivaCard = document.createElement('div');
+                    eletivaCard.className = `eletiva-card ${isFull ? 'disabled' : ''}`;
+                    eletivaCard.dataset.id = eletiva.id;
+                    eletivaCard.innerHTML = `
+                        <div class="eletiva-title">
+                            <div class="eletiva-icon">
+                                <i class="${eletiva.icon}"></i>
+                            </div>
+                            ${eletiva.title}
                         </div>
-                        ${eletiva.title}
-                    </div>
-                    <div class="eletiva-description">
-                        ${eletiva.description}
-                    </div>
-                    <div class="eletiva-count ${isFull ? 'full' : ''}">
-                        <span>Vagas: ${count}/${eletiva.limit}</span>
-                        <span>${isFull ? 'ESGOTADO' : 'DISPONÍVEL'}</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${percentage}%"></div>
-                    </div>
-                `;
-                
-                if (!isFull) {
-                    eletivaCard.addEventListener('click', function() {
-                        // Remove a seleção de todas as eletivas
-                        document.querySelectorAll('.eletiva-card').forEach(card => {
-                            card.classList.remove('selected');
+                        <div class="eletiva-description">
+                            ${eletiva.description}
+                        </div>
+                        <div class="eletiva-count ${isFull ? 'full' : ''}">
+                            <span>Vagas: ${count}/${eletiva.limit}</span>
+                            <span>${isFull ? 'ESGOTADO' : 'DISPONÍVEL'}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    `;
+                    
+                    if (!isFull) {
+                        eletivaCard.addEventListener('click', function() {
+                            // Remove a seleção de todas as eletivas
+                            document.querySelectorAll('.eletiva-card').forEach(card => {
+                                card.classList.remove('selected');
+                            });
+                            
+                            // Seleciona a eletiva clicada
+                            this.classList.add('selected');
+                            selectedEletivaId = this.dataset.id;
+                            
+                            // Mostra a eletiva selecionada
+                            selectedEletiva.style.display = 'block';
+                            selectedEletivaName.textContent = eletiva.title;
                         });
-                        
-                        // Seleciona a eletiva clicada
-                        this.classList.add('selected');
-                        selectedEletivaId = this.dataset.id;
-                        
-                        // Mostra a eletiva selecionada
-                        selectedEletiva.style.display = 'block';
-                        selectedEletivaName.textContent = eletiva.title;
-                    });
-                }
-                
-                eletivasContainer.appendChild(eletivaCard);
-            });
+                    }
+                    
+                    eletivasContainer.appendChild(eletivaCard);
+                });
+            } catch (error) {
+                console.error('Erro ao renderizar eletivas:', error);
+                showNotification('Erro ao carregar informações das eletivas. Tente novamente mais tarde.', 'error');
+            }
         }
 
         // Manipula o envio do formulário
-        function handleSubmit() {
+        async function handleSubmit() {
             // Validar campos
             if (!validateForm()) return;
             
@@ -942,58 +974,71 @@
             const turma = document.querySelector('input[name="turma"]:checked')?.value;
             const whatsapp = whatsappInput.value.trim();
             
-            // Obter dados salvos
-            const savedData = getSavedData();
-            
-            // Verificar se a eletiva ainda tem vagas
-            const eletivaObj = eletivasConfig.find(e => e.id === selectedEletivaId);
-            const count = getInscricoesPorEletiva(selectedEletivaId).length;
-            
-            if (count >= eletivaObj.limit) {
-                showNotification('Esta eletiva atingiu o limite de vagas. Por favor, escolha outra.', 'error');
+            try {
+                // Verificar se a eletiva ainda tem vagas
+                const response = await fetch(`${API_URL}/inscricoes?eletiva=${selectedEletivaId}`);
+                if (!response.ok) throw new Error('Erro ao verificar vagas');
+                
+                const inscricoes = await response.json();
+                const eletivaObj = eletivasConfig.find(e => e.id === selectedEletivaId);
+                
+                if (inscricoes.length >= eletivaObj.limit) {
+                    showNotification('Esta eletiva atingiu o limite de vagas. Por favor, escolha outra.', 'error');
+                    renderEletivas();
+                    return;
+                }
+                
+                // Criar objeto de inscrição
+                const inscricao = {
+                    nome: nome,
+                    turma: turma,
+                    whatsapp: whatsapp,
+                    eletiva: selectedEletivaId,
+                    eletivaNome: eletivaObj.title,
+                    data: new Date().toISOString()
+                };
+                
+                // Enviar para o backend
+                const postResponse = await fetch(`${API_URL}/inscricoes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(inscricao)
+                });
+                
+                if (!postResponse.ok) throw new Error('Erro ao enviar inscrição');
+                
+                // Feedback ao usuário
+                showNotification(`Inscrição realizada com sucesso na eletiva ${eletivaObj.title}!`, 'success');
+                
+                // Atualizar a exibição
                 renderEletivas();
-                return;
+                
+                // Limpar formulário
+                nomeInput.value = '';
+                updateCharacterCount();
+                document.querySelectorAll('.radio-option').forEach(el => {
+                    el.classList.remove('selected');
+                    el.querySelector('input').checked = false;
+                });
+                whatsappInput.value = '';
+                
+                // Desmarcar eletiva selecionada
+                document.querySelectorAll('.eletiva-card').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                selectedEletiva.style.display = 'none';
+                selectedEletivaId = null;
+                
+                // Se estiver no painel admin, atualiza a tabela
+                if (isAdmin) {
+                    updateInscricoesTable();
+                }
+            } catch (error) {
+                console.error('Erro ao enviar inscrição:', error);
+                showNotification('Erro ao enviar inscrição. Tente novamente mais tarde.', 'error');
             }
-            
-            // Criar objeto de inscrição
-            const inscricao = {
-                id: Date.now(),
-                nome: nome,
-                turma: turma,
-                whatsapp: whatsapp,
-                eletiva: selectedEletivaId,
-                eletivaNome: eletivaObj.title,
-                data: new Date().toLocaleString()
-            };
-            
-            // Adicionar à lista de inscrições
-            savedData.inscricoes = savedData.inscricoes || [];
-            savedData.inscricoes.push(inscricao);
-            
-            // Salvar dados
-            saveData(savedData);
-            
-            // Feedback ao usuário
-            showNotification(`Inscrição realizada com sucesso na eletiva ${eletivaObj.title}!`, 'success');
-            
-            // Atualizar a exibição
-            renderEletivas();
-            
-            // Limpar formulário
-            nomeInput.value = '';
-            updateCharacterCount();
-            document.querySelectorAll('.radio-option').forEach(el => {
-                el.classList.remove('selected');
-                el.querySelector('input').checked = false;
-            });
-            whatsappInput.value = '';
-            
-            // Desmarcar eletiva selecionada
-            document.querySelectorAll('.eletiva-card').forEach(el => {
-                el.classList.remove('selected');
-            });
-            selectedEletiva.style.display = 'none';
-            selectedEletivaId = null;
         }
 
         // Valida o formulário
@@ -1032,49 +1077,12 @@
         function showNotification(message, type) {
             notification.textContent = message;
             notification.className = `notification ${type}`;
+            notification.style.display = 'block';
             
             // Esconde a notificação após alguns segundos
             setTimeout(() => {
                 notification.style.display = 'none';
             }, 5000);
-        }
-
-        // Obtém dados salvos
-        function getSavedData() {
-            const savedData = localStorage.getItem('eletivasData');
-            return savedData ? JSON.parse(savedData) : { inscricoes: [], config: eletivasConfig };
-        }
-
-        // Salva dados
-        function saveData(data) {
-            localStorage.setItem('eletivasData', JSON.stringify(data));
-        }
-
-        // Carrega dados salvos
-        function loadSavedData() {
-            const savedData = getSavedData();
-            
-            // Se não houver configuração salva, usa a padrão
-            if (!savedData.config) {
-                savedData.config = eletivasConfig;
-                saveData(savedData);
-            } else {
-                // Atualiza a configuração com os dados salvos
-                eletivasConfig.forEach(eletiva => {
-                    const savedEletiva = savedData.config.find(e => e.id === eletiva.id);
-                    if (savedEletiva) {
-                        eletiva.limit = savedEletiva.limit;
-                    }
-                });
-            }
-            
-            return savedData;
-        }
-        
-        // Obtém inscrições por eletiva
-        function getInscricoesPorEletiva(eletivaId) {
-            const savedData = getSavedData();
-            return savedData.inscricoes?.filter(i => i.eletiva === eletivaId) || [];
         }
         
         // Mostra o formulário de login
@@ -1144,114 +1152,85 @@
                 
                 // Adiciona evento para salvar o limite
                 const saveBtn = limitControl.querySelector('button');
-                saveBtn.addEventListener('click', function() {
+                saveBtn.addEventListener('click', async function() {
                     const newLimit = parseInt(document.getElementById(`limit-${eletiva.id}`).value);
-                    if (!isNaN(newLimit) && newLimit >= 0) {
-                        eletiva.limit = newLimit;
-                        
-                        // Atualiza a configuração no localStorage
-                        const savedData = getSavedData();
-                        savedData.config = eletivasConfig;
-                        saveData(savedData);
-                        
-                        // Atualiza a exibição
-                        renderEletivas();
-                        
-                        // Feedback
-                        showNotification(`Limite de vagas para ${eletiva.title} atualizado para ${newLimit}!`, 'success');
+                    if (!isNaN(newLimit) {
+                        try {
+                            // Atualiza no backend
+                            const response = await fetch(`${API_URL}/eletivas/${eletiva.id}`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ limit: newLimit })
+                            });
+                            
+                            if (!response.ok) throw new Error('Erro ao atualizar limite');
+                            
+                            // Atualiza localmente
+                            eletiva.limit = newLimit;
+                            
+                            // Atualiza a exibição
+                            renderEletivas();
+                            
+                            // Feedback
+                            showNotification(`Limite de vagas para ${eletiva.title} atualizado para ${newLimit}!`, 'success');
+                        } catch (error) {
+                            console.error('Erro ao atualizar limite:', error);
+                            showNotification('Erro ao atualizar limite de vagas. Tente novamente.', 'error');
+                        }
                     }
                 });
             });
         }
         
         // Atualiza a tabela de inscrições
-        function updateInscricoesTable() {
-            const savedData = getSavedData();
-            const inscricoes = savedData.inscricoes || [];
-            const filterValue = eletivaFilter.value;
-            
-            // Filtra as inscrições
-            const filteredInscricoes = filterValue 
-                ? inscricoes.filter(i => i.eletiva === filterValue)
-                : inscricoes;
-            
-            // Preenche a tabela
-            inscricoesTableBody.innerHTML = '';
-            
-            if (filteredInscricoes.length === 0) {
+        async function updateInscricoesTable() {
+            try {
+                const filterValue = eletivaFilter.value;
+                const url = filterValue ? `${API_URL}/inscricoes?eletiva=${filterValue}` : `${API_URL}/inscricoes`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Erro ao carregar inscrições');
+                
+                const inscricoes = await response.json();
+                
+                // Preenche a tabela
+                inscricoesTableBody.innerHTML = '';
+                
+                if (inscricoes.length === 0) {
+                    inscricoesTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px;">
+                                Nenhuma inscrição encontrada
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                inscricoes.forEach(inscricao => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${inscricao.nome}</td>
+                        <td>${inscricao.turma}</td>
+                        <td>${inscricao.whatsapp}</td>
+                        <td>${inscricao.eletivaNome}</td>
+                        <td>${new Date(inscricao.data).toLocaleString()}</td>
+                    `;
+                    inscricoesTableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Erro ao atualizar tabela:', error);
                 inscricoesTableBody.innerHTML = `
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 20px;">
-                            Nenhuma inscrição encontrada
+                        <td colspan="5" style="text-align: center; padding: 20px; color: var(--danger);">
+                            Erro ao carregar inscrições
                         </td>
                     </tr>
                 `;
-                return;
-            }
-            
-            filteredInscricoes.forEach(inscricao => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${inscricao.nome}</td>
-                    <td>${inscricao.turma}</td>
-                    <td>${inscricao.whatsapp}</td>
-                    <td>${inscricao.eletivaNome}</td>
-                    <td>${inscricao.data}</td>
-                `;
-                inscricoesTableBody.appendChild(row);
-            });
-        }
-        
-        // Inicializa alguns dados para demonstração
-        function initDemoData() {
-            const savedData = getSavedData();
-            
-            if (!savedData.inscricoes || savedData.inscricoes.length === 0) {
-                savedData.inscricoes = [
-                    {
-                        id: 1,
-                        nome: "Ana Silva",
-                        turma: "2A",
-                        whatsapp: "(11)98765-4321",
-                        eletiva: "danca",
-                        eletivaNome: "Dança",
-                        data: "10/06/2025, 14:30:25"
-                    },
-                    {
-                        id: 2,
-                        nome: "Carlos Oliveira",
-                        turma: "1B",
-                        whatsapp: "(21)99876-5432",
-                        eletiva: "biq-games",
-                        eletivaNome: "BiQ Games",
-                        data: "10/06/2025, 15:45:12"
-                    },
-                    {
-                        id: 3,
-                        nome: "Mariana Costa",
-                        turma: "2C",
-                        whatsapp: "(31)99123-4567",
-                        eletiva: "arte-sustentavel",
-                        eletivaNome: "Arte Sustentável",
-                        data: "11/06/2025, 09:15:33"
-                    },
-                    {
-                        id: 4,
-                        nome: "Pedro Santos",
-                        turma: "1D",
-                        whatsapp: "(41)99234-5678",
-                        eletiva: "sobrevivencialismo",
-                        eletivaNome: "Sobrevivencialismo",
-                        data: "11/06/2025, 11:20:47"
-                    }
-                ];
-                
-                saveData(savedData);
             }
         }
-        
-        // Inicializa dados de demonstração
-        initDemoData();
     </script>
 </body>
 </html>
