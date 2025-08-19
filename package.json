@@ -1,0 +1,16 @@
+{
+  "name": "eletivas-form",
+  "version": "1.0.0",
+  "description": "Formulário de inscrição para eletivas",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'No dev server' && exit 0",
+    "build": "echo 'No build' && exit 0"
+  },
+  "dependencies": {
+    "postgres": "^3.4.4",
+    "express": "^4.19.2"
+  }
+}
+
+
