@@ -672,7 +672,6 @@
         <div id="inscricoes-tab" class="tab-content active">
             <select id="eletiva-filter" class="eletiva-select">
                 <option value="">Todas as eletivas</option>
-                <!-- Opções serão preenchidas via JavaScript -->
             </select>
             
             <table class="inscricoes-table">
@@ -685,9 +684,7 @@
                         <th>Data</th>
                     </tr>
                 </thead>
-                <tbody id="inscricoes-table-body">
-                    <!-- Dados serão preenchidos via JavaScript -->
-                </tbody>
+                <tbody id="inscricoes-table-body"></tbody>
             </table>
         </div>
         
@@ -697,9 +694,7 @@
                 <div>Atualize os limites de vagas para cada eletiva. As alterações afetarão apenas novas inscrições.</div>
             </div>
             
-            <div id="eletivas-limits" style="margin-top: 20px;">
-                <!-- Controles de limite serão gerados via JavaScript -->
-            </div>
+            <div id="eletivas-limits" style="margin-top: 20px;"></div>
         </div>
     </div>
     
@@ -724,67 +719,32 @@
     </div>
 
     <script>
-        // Configuração inicial das eletivas
+        // ========= CONFIG =========
+        // Use "/api" se o backend estiver no MESMO domínio do frontend.
+        // Se estiver em outro domínio, troque por "https://seuapp.vercel.app/api"
+        const API_BASE = "/api"; // <-- AJUSTE AQUI se necessário
+
+        // Configuração inicial das eletivas (UI)
         const eletivasConfig = [
-            { 
-                id: 'arte-sustentavel', 
-                title: 'Arte Sustentável', 
-                icon: 'fas fa-recycle',
-                description: 'Explorar técnicas artísticas utilizando materiais recicláveis e sustentáveis.',
-                limit: 28
-            },
-            { 
-                id: 'artistas-historia', 
-                title: 'Artistas que Marcaram a História da Arte', 
-                icon: 'fas fa-palette',
-                description: 'Estudo da vida e obra dos grandes mestres da arte mundial.',
-                limit: 28
-            },
-            { 
-                id: 'biq-games', 
-                title: 'BiQ Games', 
-                icon: 'fas fa-gamepad',
-                description: 'Desenvolvimento de jogos digitais e conceitos de game design.',
-                limit: 28
-            },
-            { 
-                id: 'cidadania-digital', 
-                title: 'Cidadania Digital', 
-                icon: 'fas fa-laptop-code',
-                description: 'Reflexão sobre direitos, deveres e ética no ambiente digital.',
-                limit: 28
-            },
-            { 
-                id: 'danca', 
-                title: 'Dança', 
-                icon: 'fas fa-music',
-                description: 'Exploração de diferentes ritmos e expressões corporais através da dança.',
-                limit: 28
-            },
-            { 
-                id: 'jornalismo', 
-                title: 'Imprensa Jornalismo e Democracia', 
-                icon: 'fas fa-newspaper',
-                description: 'O papel da imprensa na sociedade e sua relação com a democracia.',
-                limit: 28
-            },
-            { 
-                id: 'sobrevivencialismo', 
-                title: 'Sobrevivencialismo', 
-                icon: 'fas fa-campground',
-                description: 'Técnicas de sobrevivência em ambientes hostis e situações de emergência.',
-                limit: 28
-            },
-            { 
-                id: 'ervas', 
-                title: 'Verde que Cura', 
-                icon: 'fas fa-leaf',
-                description: 'Descobrindo os segredos medicinais das plantas e ervas.',
-                limit: 28
-            }
+            { id: 'arte-sustentavel',  title: 'Arte Sustentável',  icon: 'fas fa-recycle',
+              description: 'Explorar técnicas artísticas utilizando materiais recicláveis e sustentáveis.', limit: 28 },
+            { id: 'artistas-historia', title: 'Artistas que Marcaram a História da Arte', icon: 'fas fa-palette',
+              description: 'Estudo da vida e obra dos grandes mestres da arte mundial.', limit: 28 },
+            { id: 'biq-games',         title: 'BiQ Games', icon: 'fas fa-gamepad',
+              description: 'Desenvolvimento de jogos digitais e conceitos de game design.', limit: 28 },
+            { id: 'cidadania-digital', title: 'Cidadania Digital', icon: 'fas fa-laptop-code',
+              description: 'Reflexão sobre direitos, deveres e ética no ambiente digital.', limit: 28 },
+            { id: 'danca',             title: 'Dança', icon: 'fas fa-music',
+              description: 'Exploração de diferentes ritmos e expressões corporais através da dança.', limit: 28 },
+            { id: 'jornalismo',        title: 'Imprensa Jornalismo e Democracia', icon: 'fas fa-newspaper',
+              description: 'O papel da imprensa na sociedade e sua relação com a democracia.', limit: 28 },
+            { id: 'sobrevivencialismo',title: 'Sobrevivencialismo', icon: 'fas fa-campground',
+              description: 'Técnicas de sobrevivência em ambientes hostis e situações de emergência.', limit: 28 },
+            { id: 'ervas',             title: 'Verde que Cura', icon: 'fas fa-leaf',
+              description: 'Descobrindo os segredos medicinais das plantas e ervas.', limit: 28 }
         ];
 
-        // Elementos DOM
+        // ========= ELEMENTOS =========
         const eletivasContainer = document.getElementById('eletivas-container');
         const submitBtn = document.getElementById('submit-btn');
         const notification = document.getElementById('notification');
@@ -803,219 +763,173 @@
         const inscricoesTableBody = document.getElementById('inscricoes-table-body');
         const eletivasLimits = document.getElementById('eletivas-limits');
 
-        // Estado da aplicação
+        // ========= ESTADO =========
         let selectedEletivaId = null;
         let isAdmin = false;
-        const ADMIN_PASSWORD = "admin123"; // Senha para acesso administrativo
-        const API_URL = "https://eletivas-2025-2.vercel.app/"; // Substitua pelo seu URL do Vercel
+        const ADMIN_PASSWORD = "admin123"; // (mantive) — troque se quiser
 
-        // Inicialização
+        // ========= INICIALIZAÇÃO =========
         document.addEventListener('DOMContentLoaded', function() {
-            // Carrega dados do backend
-            loadDataFromBackend();
-            
-            // Cria as opções de eletivas
-            renderEletivas();
-            
-            // Atualiza contagem de caracteres do nome
+            renderEletivas();           // agora com fallback
             updateCharacterCount();
-            
-            // Adiciona event listeners
+
             nomeInput.addEventListener('input', updateCharacterCount);
             whatsappInput.addEventListener('input', formatWhatsapp);
             submitBtn.addEventListener('click', handleSubmit);
             adminLink.addEventListener('click', showLoginForm);
             loginBtn.addEventListener('click', handleLogin);
             logoutBtn.addEventListener('click', handleLogout);
-            
-            // Event listeners para abas
+
+            // Abas
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', function() {
-                    // Remove classe ativa de todas as abas
-                    document.querySelectorAll('.tab').forEach(t => {
-                        t.classList.remove('active');
-                    });
-                    
-                    // Remove classe ativa de todos os conteúdos
-                    document.querySelectorAll('.tab-content').forEach(c => {
-                        c.classList.remove('active');
-                    });
-                    
-                    // Adiciona classe ativa à aba clicada
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                     this.classList.add('active');
-                    
-                    // Mostra o conteúdo correspondente
                     const tabId = this.getAttribute('data-tab');
                     document.getElementById(`${tabId}-tab`).classList.add('active');
                 });
             });
-            
-            // Event listener para filtro de eletivas
+
+            // Filtro admin
             eletivaFilter.addEventListener('change', updateInscricoesTable);
-            
-            // Oculta o painel administrativo inicialmente
+
+            // Seleção visual das turmas (UX)
+            document.querySelectorAll('.radio-option input[name="turma"]').forEach(inp => {
+                inp.addEventListener('change', () => {
+                    document.querySelectorAll('.radio-option').forEach(l => l.classList.remove('selected'));
+                    inp.closest('.radio-option').classList.add('selected');
+                });
+            });
+
             adminPanel.style.display = 'none';
             loginForm.style.display = 'none';
         });
 
-        // Carrega dados do backend
-        async function loadDataFromBackend() {
-            try {
-                const response = await fetch(`${API_URL}/inscricoes`);
-                if (!response.ok) throw new Error('Erro ao carregar inscrições');
-                
-                const data = await response.json();
-                
-                // Atualiza a exibição
-                renderEletivas();
-                if (isAdmin) {
-                    updateInscricoesTable();
-                }
-                
-                return data;
-            } catch (error) {
-                console.error('Erro ao carregar dados:', error);
-                showNotification('Erro ao carregar dados do servidor. Tente novamente mais tarde.', 'error');
-                return [];
-            }
-        }
-
-        // Atualiza contagem de caracteres do nome
+        // ========= UTIL =========
         function updateCharacterCount() {
             nomeCount.textContent = nomeInput.value.length;
         }
 
-        // Formata o número de WhatsApp
         function formatWhatsapp() {
             let value = whatsappInput.value.replace(/\D/g, '');
             if (value.length > 11) value = value.substring(0, 11);
-            
-            if (value.length > 0) {
-                value = '(' + value;
-            }
-            if (value.length > 3) {
-                value = value.substring(0, 3) + ')' + value.substring(3);
-            }
-            if (value.length > 9) {
-                value = value.substring(0, 9) + '-' + value.substring(9);
-            }
+            if (value.length > 0)  value = '(' + value;
+            if (value.length > 3)  value = value.substring(0, 3) + ')' + value.substring(3);
+            if (value.length > 9)  value = value.substring(0, 9) + '-' + value.substring(9);
             whatsappInput.value = value;
         }
 
-        // Renderiza as eletivas
+        // ========= RENDER ELETIVAS (com fallback se API falhar) =========
         async function renderEletivas() {
             eletivasContainer.innerHTML = '';
-            
+            let inscricoes = [];
+
             try {
-                // Carrega as inscrições do backend
-                const response = await fetch(`${API_URL}/inscricoes`);
+                const response = await fetch(`${API_BASE}/inscricoes`);
                 if (!response.ok) throw new Error('Erro ao carregar inscrições');
-                
-                const inscricoes = await response.json();
-                
-                eletivasConfig.forEach(eletiva => {
-                    const count = inscricoes.filter(i => i.eletiva === eletiva.id).length;
-                    const isFull = count >= eletiva.limit;
-                    const percentage = Math.min(100, (count / eletiva.limit) * 100);
-                    
-                    const eletivaCard = document.createElement('div');
-                    eletivaCard.className = `eletiva-card ${isFull ? 'disabled' : ''}`;
-                    eletivaCard.dataset.id = eletiva.id;
-                    eletivaCard.innerHTML = `
-                        <div class="eletiva-title">
-                            <div class="eletiva-icon">
-                                <i class="${eletiva.icon}"></i>
-                            </div>
-                            ${eletiva.title}
-                        </div>
-                        <div class="eletiva-description">
-                            ${eletiva.description}
-                        </div>
-                        <div class="eletiva-count ${isFull ? 'full' : ''}">
-                            <span>Vagas: ${count}/${eletiva.limit}</span>
-                            <span>${isFull ? 'ESGOTADO' : 'DISPONÍVEL'}</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${percentage}%"></div>
-                        </div>
-                    `;
-                    
-                    if (!isFull) {
-                        eletivaCard.addEventListener('click', function() {
-                            // Remove a seleção de todas as eletivas
-                            document.querySelectorAll('.eletiva-card').forEach(card => {
-                                card.classList.remove('selected');
-                            });
-                            
-                            // Seleciona a eletiva clicada
-                            this.classList.add('selected');
-                            selectedEletivaId = this.dataset.id;
-                            
-                            // Mostra a eletiva selecionada
-                            selectedEletiva.style.display = 'block';
-                            selectedEletivaName.textContent = eletiva.title;
-                        });
-                    }
-                    
-                    eletivasContainer.appendChild(eletivaCard);
-                });
+                inscricoes = await response.json();
             } catch (error) {
-                console.error('Erro ao renderizar eletivas:', error);
-                showNotification('Erro ao carregar informações das eletivas. Tente novamente mais tarde.', 'error');
+                console.warn('Falha ao carregar inscrições. Renderizando com contagem 0.', error);
+                // segue sem return para ainda renderizar a UI
             }
+
+            eletivasConfig.forEach(eletiva => {
+                const count = inscricoes.filter(i => i.eletiva === eletiva.id).length;
+                const isFull = count >= eletiva.limit;
+                const percentage = Math.min(100, (count / eletiva.limit) * 100);
+
+                const eletivaCard = document.createElement('div');
+                eletivaCard.className = `eletiva-card ${isFull ? 'disabled' : ''}`;
+                eletivaCard.dataset.id = eletiva.id;
+                eletivaCard.innerHTML = `
+                    <div class="eletiva-title">
+                        <div class="eletiva-icon">
+                            <i class="${eletiva.icon}"></i>
+                        </div>
+                        ${eletiva.title}
+                    </div>
+                    <div class="eletiva-description">
+                        ${eletiva.description}
+                    </div>
+                    <div class="eletiva-count ${isFull ? 'full' : ''}">
+                        <span>Vagas: ${count}/${eletiva.limit}</span>
+                        <span>${isFull ? 'ESGOTADO' : 'DISPONÍVEL'}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+
+                if (!isFull) {
+                    eletivaCard.addEventListener('click', function() {
+                        document.querySelectorAll('.eletiva-card').forEach(card => {
+                            card.classList.remove('selected');
+                        });
+                        this.classList.add('selected');
+                        selectedEletivaId = this.dataset.id;
+                        selectedEletiva.style.display = 'block';
+                        selectedEletivaName.textContent = eletiva.title;
+                    });
+                }
+
+                eletivasContainer.appendChild(eletivaCard);
+            });
         }
 
-        // Manipula o envio do formulário
+        // ========= SUBMIT =========
         async function handleSubmit() {
-            // Validar campos
             if (!validateForm()) return;
-            
+
             const nome = nomeInput.value.trim();
             const turma = document.querySelector('input[name="turma"]:checked')?.value;
             const whatsapp = whatsappInput.value.trim();
-            
+
             try {
-                // Verificar se a eletiva ainda tem vagas
-                const response = await fetch(`${API_URL}/inscricoes?eletiva=${selectedEletivaId}`);
-                if (!response.ok) throw new Error('Erro ao verificar vagas');
-                
-                const inscricoes = await response.json();
+                // Verifica vagas atuais dessa eletiva
+                let inscricoes = [];
+                try {
+                    const r = await fetch(`${API_BASE}/inscricoes?eletiva=${selectedEletivaId}`);
+                    if (!r.ok) throw new Error();
+                    inscricoes = await r.json();
+                } catch (_) {
+                    // se falhar, tenta mesmo assim (o backend deve barrar overbooking)
+                }
+
                 const eletivaObj = eletivasConfig.find(e => e.id === selectedEletivaId);
-                
+                if (!eletivaObj) throw new Error('Eletiva inválida.');
+
                 if (inscricoes.length >= eletivaObj.limit) {
                     showNotification('Esta eletiva atingiu o limite de vagas. Por favor, escolha outra.', 'error');
-                    renderEletivas();
+                    await renderEletivas();
                     return;
                 }
-                
-                // Criar objeto de inscrição
+
                 const inscricao = {
-                    nome: nome,
-                    turma: turma,
-                    whatsapp: whatsapp,
+                    nome,
+                    turma,
+                    whatsapp,
                     eletiva: selectedEletivaId,
                     eletivaNome: eletivaObj.title,
                     data: new Date().toISOString()
                 };
-                
-                // Enviar para o backend
-                const postResponse = await fetch(`${API_URL}/inscricoes`, {
+
+                const postResponse = await fetch(`${API_BASE}/inscricoes`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(inscricao)
                 });
-                
-                if (!postResponse.ok) throw new Error('Erro ao enviar inscrição');
-                
-                // Feedback ao usuário
+
+                if (!postResponse.ok) {
+                    const txt = await postResponse.text();
+                    throw new Error(txt || 'Erro ao enviar inscrição');
+                }
+
                 showNotification(`Inscrição realizada com sucesso na eletiva ${eletivaObj.title}!`, 'success');
-                
-                // Atualizar a exibição
-                renderEletivas();
-                
-                // Limpar formulário
+
+                await renderEletivas();
+
+                // Limpa o formulário
                 nomeInput.value = '';
                 updateCharacterCount();
                 document.querySelectorAll('.radio-option').forEach(el => {
@@ -1023,80 +937,62 @@
                     el.querySelector('input').checked = false;
                 });
                 whatsappInput.value = '';
-                
-                // Desmarcar eletiva selecionada
-                document.querySelectorAll('.eletiva-card').forEach(el => {
-                    el.classList.remove('selected');
-                });
+                document.querySelectorAll('.eletiva-card').forEach(el => el.classList.remove('selected'));
                 selectedEletiva.style.display = 'none';
                 selectedEletivaId = null;
-                
-                // Se estiver no painel admin, atualiza a tabela
-                if (isAdmin) {
-                    updateInscricoesTable();
-                }
+
+                if (isAdmin) updateInscricoesTable();
             } catch (error) {
                 console.error('Erro ao enviar inscrição:', error);
-                showNotification('Erro ao enviar inscrição. Tente novamente mais tarde.', 'error');
+                showNotification(error.message || 'Erro ao enviar inscrição. Tente novamente mais tarde.', 'error');
+                renderEletivas();
             }
         }
 
-        // Valida o formulário
+        // ========= VALIDAÇÃO =========
         function validateForm() {
             const nome = nomeInput.value.trim();
             const turma = document.querySelector('input[name="turma"]:checked');
             const whatsapp = whatsappInput.value.trim();
-            
-            let valid = true;
+
             let message = '';
-            
             if (!nome) {
-                valid = false;
                 message = 'Por favor, informe seu nome completo.';
                 nomeInput.focus();
             } else if (!turma) {
-                valid = false;
                 message = 'Por favor, selecione sua turma.';
             } else if (!whatsapp || whatsapp.length < 14) {
-                valid = false;
                 message = 'Por favor, informe um número de WhatsApp válido com DDD.';
                 whatsappInput.focus();
             } else if (!selectedEletivaId) {
-                valid = false;
                 message = 'Por favor, selecione uma eletiva.';
             }
-            
-            if (!valid) {
+
+            if (message) {
                 showNotification(message, 'error');
+                return false;
             }
-            
-            return valid;
+            return true;
         }
 
-        // Mostra notificação
+        // ========= NOTIFICAÇÃO =========
         function showNotification(message, type) {
             notification.textContent = message;
             notification.className = `notification ${type}`;
             notification.style.display = 'block';
-            
-            // Esconde a notificação após alguns segundos
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 5000);
+            setTimeout(() => { notification.style.display = 'none'; }, 5000);
         }
         
-        // Mostra o formulário de login
+        // ========= LOGIN / LOGOUT (ADMIN SIMPLES) =========
         function showLoginForm(e) {
             e.preventDefault();
             formContainer.style.display = 'none';
             adminPanel.style.display = 'none';
             loginForm.style.display = 'block';
         }
-        
-        // Manipula o login
+
         function handleLogin() {
             const password = document.getElementById('admin-password').value;
-            
             if (password === ADMIN_PASSWORD) {
                 isAdmin = true;
                 loginForm.style.display = 'none';
@@ -1104,25 +1000,21 @@
                 adminPanel.style.display = 'block';
                 initAdminPanel();
             } else {
-                document.getElementById('login-notification').innerHTML = `
-                    <div class="notification error">
-                        Senha incorreta. Tente novamente.
-                    </div>
-                `;
+                document.getElementById('login-notification').innerHTML =
+                    `<div class="notification error">Senha incorreta. Tente novamente.</div>`;
             }
         }
-        
-        // Manipula o logout
+
         function handleLogout() {
             isAdmin = false;
             adminPanel.style.display = 'none';
             formContainer.style.display = 'block';
             document.getElementById('admin-password').value = '';
         }
-        
-        // Inicializa o painel administrativo
+
+        // ========= ADMIN =========
         function initAdminPanel() {
-            // Preenche o seletor de filtro de eletivas
+            // Preenche filtro
             eletivaFilter.innerHTML = '<option value="">Todas as eletivas</option>';
             eletivasConfig.forEach(eletiva => {
                 const option = document.createElement('option');
@@ -1130,11 +1022,10 @@
                 option.textContent = eletiva.title;
                 eletivaFilter.appendChild(option);
             });
-            
-            // Atualiza a tabela de inscrições
+
             updateInscricoesTable();
-            
-            // Preenche os controles de limite de vagas
+
+            // Controles de limite
             eletivasLimits.innerHTML = '';
             eletivasConfig.forEach(eletiva => {
                 const limitControl = document.createElement('div');
@@ -1149,31 +1040,25 @@
                     </div>
                 `;
                 eletivasLimits.appendChild(limitControl);
-                
-                // Adiciona evento para salvar o limite
+
                 const saveBtn = limitControl.querySelector('button');
                 saveBtn.addEventListener('click', async function() {
                     const newLimit = parseInt(document.getElementById(`limit-${eletiva.id}`).value);
-                    if (!isNaN(newLimit) {
+                    // FIX: parêntese faltando aqui anteriormente
+                    if (!isNaN(newLimit)) {
                         try {
                             // Atualiza no backend
-                            const response = await fetch(`${API_URL}/eletivas/${eletiva.id}`, {
+                            const response = await fetch(`${API_BASE}/eletivas/${eletiva.id}`, {
                                 method: 'PUT',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
+                                headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ limit: newLimit })
                             });
-                            
                             if (!response.ok) throw new Error('Erro ao atualizar limite');
-                            
+
                             // Atualiza localmente
                             eletiva.limit = newLimit;
-                            
-                            // Atualiza a exibição
+
                             renderEletivas();
-                            
-                            // Feedback
                             showNotification(`Limite de vagas para ${eletiva.title} atualizado para ${newLimit}!`, 'success');
                         } catch (error) {
                             console.error('Erro ao atualizar limite:', error);
@@ -1183,32 +1068,22 @@
                 });
             });
         }
-        
-        // Atualiza a tabela de inscrições
+
         async function updateInscricoesTable() {
             try {
                 const filterValue = eletivaFilter.value;
-                const url = filterValue ? `${API_URL}/inscricoes?eletiva=${filterValue}` : `${API_URL}/inscricoes`;
-                
+                const url = filterValue ? `${API_BASE}/inscricoes?eletiva=${filterValue}` : `${API_BASE}/inscricoes`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Erro ao carregar inscrições');
-                
                 const inscricoes = await response.json();
-                
-                // Preenche a tabela
+
                 inscricoesTableBody.innerHTML = '';
-                
                 if (inscricoes.length === 0) {
                     inscricoesTableBody.innerHTML = `
-                        <tr>
-                            <td colspan="5" style="text-align: center; padding: 20px;">
-                                Nenhuma inscrição encontrada
-                            </td>
-                        </tr>
-                    `;
+                        <tr><td colspan="5" style="text-align:center;padding:20px;">Nenhuma inscrição encontrada</td></tr>`;
                     return;
                 }
-                
+
                 inscricoes.forEach(inscricao => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
