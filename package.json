@@ -2,12 +2,15 @@
   "name": "eletivas-form",
   "version": "1.0.0",
   "description": "Formulário de inscrição para eletivas",
+  "scripts": {
+    "dev": "echo 'No dev server needed for static site'",
+    "build": "echo 'No build step needed for static site'",
+    "start": "echo 'No start command needed for static site'"
+  },
   "dependencies": {
     "postgres": "^3.4.4"
   },
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+  "engines": {
+    "node": "18.x"
   }
 }
