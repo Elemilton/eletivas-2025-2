@@ -782,7 +782,7 @@
         let selectedEletivaId = null;
         let isAdmin = false;
         const ADMIN_PASSWORD = "admin123";
-        const API_URL = ""; // Deixe vazio para usar caminhos relativos
+        const API_URL = ""; // Usa caminhos relativos
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
@@ -1091,7 +1091,7 @@
                     throw new Error(data.error || 'Erro ao enviar inscrição');
                 }
                 
-                showNotification(`Inscrição realizada com sucesso na eletiva ${data.data.eletiva_nome}!`, 'success');
+                showNotification(`Inscrição realizada com sucesso na eletiva ${data.eletiva_nome}!`, 'success');
                 
                 // Atualizar a exibição
                 carregarEletivas();
@@ -1332,14 +1332,8 @@
                         </div>
                         <div style="background: #fff8e1; padding: 20px; border-radius: var(--border-radius); text-align: center;">
                             <h3><i class="fas fa-chart-line"></i> Taxa Ocupação</h3>
-                            <p style="font-size: 2rem; font-weight: bold; color: var(--warning);">${data.ocupacao.taxa_ocupacao}%</p>
+                            <p style="font-size: 2rem; font-weight: bold; color: var(--warning);">${data.ocupacao?.taxa_ocupacao || 0}%</p>
                         </div>
-                    </div>
-                    
-                    <div style="background: white; padding: 20px; border-radius: var(--border-radius); margin-bottom: 20px;">
-                        <h3><i class="fas fa-info-circle"></i> Vagas Disponíveis</h3>
-                        <p>Total: ${data.ocupacao.vagas_disponiveis} vagas disponíveis de ${data.ocupacao.total_vagas}</p>
-                        <p>Inscrições nas últimas 24h: ${data.recente.ultimas_24h}</p>
                     </div>
                 `;
                 
