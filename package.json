@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Formulário de inscrição para eletivas",
   "scripts": {
-    "dev": "echo 'No dev server needed for static site'",
-    "build": "echo 'No build step needed for static site'",
-    "start": "echo 'No start command needed for static site'"
+    "dev": "echo 'No dev server needed' && exit 0",
+    "build": "echo 'No build step needed' && exit 0",
+    "start": "echo 'No start command needed' && exit 0"
   },
   "dependencies": {
     "postgres": "^3.4.4"
