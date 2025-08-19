@@ -3,14 +3,10 @@
   "version": "1.0.0",
   "description": "Formulário de inscrição para eletivas",
   "scripts": {
-    "dev": "echo 'No dev server needed' && exit 0",
-    "build": "echo 'No build step needed' && exit 0",
-    "start": "echo 'No start command needed' && exit 0"
+    "build": "echo 'No build step needed for static site' && exit 0",
+    "dev": "echo 'No dev server needed' && exit 0"
   },
   "dependencies": {
     "postgres": "^3.4.4"
-  },
-  "engines": {
-    "node": "18.x"
   }
 }
