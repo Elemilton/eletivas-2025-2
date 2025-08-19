@@ -830,7 +830,7 @@
         // Função para carregar eletivas da API
         async function carregarEletivas() {
             try {
-                const response = await fetch('/api/estatisticas?tipo=eletivas');
+                const response = await fetch('/api/estatistics?tipo=eletivas');
                 
                 if (!response.ok) {
                     throw new Error('Erro ao carregar eletivas');
